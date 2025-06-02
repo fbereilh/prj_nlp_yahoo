@@ -1,0 +1,27 @@
+{
+  "dockerfile": ".coolify/Dockerfile",
+  "port": 5001,
+  "pullRequestPreviewsEnabled": true,
+  "deploymentStrategy": "rolling",
+  "healthCheckPath": "/health",
+  "minInstanceCount": 1,
+  "maxInstanceCount": 1,
+  "resources": {
+    "limits": {
+      "memory": "4G"
+    },
+    "reservations": {
+      "memory": "2G"
+    }
+  },
+  "volumes": [
+    {
+      "source": "models",
+      "target": "/app/models"
+    },
+    {
+      "source": "data",
+      "target": "/app/data"
+    }
+  ]
+} 
