@@ -71,6 +71,6 @@ wheels/
 
 
 # project specific
-data/
+data/*
 .sesskey
 fasthtml-ctx.txt
