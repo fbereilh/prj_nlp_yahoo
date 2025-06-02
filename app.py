@@ -15,8 +15,10 @@ app, rt = fast_app(
     hdrs=(
         # Add Chart.js for visualization
         Script(src="https://cdn.jsdelivr.net/npm/chart.js"),
+        # Add direct style for margin
+        Style("body { margin-top: 3rem !important; }"),
         # Link to external CSS file
-        Link(rel="stylesheet", href="/styles.css", type="text/css")
+        Link(rel="stylesheet", href="/static/styles.css", type="text/css")
     )
 )
 
@@ -355,7 +357,7 @@ def post(query: str):
         id="predictions-list"
     )
 
-@rt("/styles.css")
+@rt("/static/styles.css")
 def get():
     """Serve the CSS file"""
     return Response(
