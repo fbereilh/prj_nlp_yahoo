@@ -48,10 +48,7 @@ def render_prediction(pred: Prediction):
         const ctx = document.getElementById('{chart_id}');
         if (!ctx) return;  // Exit if canvas not found
         
-        // Set fixed dimensions for the canvas
-        ctx.style.height = '300px';
-        ctx.style.width = '100%';
-        
+        // Create chart with fixed dimensions
         new Chart(ctx, {{
             type: 'bar',
             data: {{
@@ -68,6 +65,14 @@ def render_prediction(pred: Prediction):
                 indexAxis: 'y',
                 maintainAspectRatio: false,
                 responsive: true,
+                layout: {{
+                    padding: {{
+                        left: 10,
+                        right: 20,
+                        top: 10,
+                        bottom: 10
+                    }}
+                }},
                 plugins: {{
                     legend: {{ display: false }},
                 }},
@@ -82,11 +87,9 @@ def render_prediction(pred: Prediction):
                     }},
                     y: {{
                         ticks: {{
-                            autoSkip: false,  // Prevent skipping labels
-                            padding: 10,      // Add some padding
-                            font: {{
-                                size: 11     // Slightly smaller font for better fit
-                            }}
+                            autoSkip: false,
+                            padding: 10,
+                            font: {{ size: 11 }}
                         }}
                     }}
                 }},
@@ -105,16 +108,18 @@ def render_prediction(pred: Prediction):
         }}
     }}
 
-    // Initialize on DOM content loaded and after HTMX swaps
+    // Initialize chart after DOM content loaded and HTMX swaps
     document.addEventListener('DOMContentLoaded', initChart_{pred.id});
-    document.addEventListener('htmx:afterSettle', function(evt) {{
-        if (document.getElementById('{chart_id}')) {{
-            initChart_{pred.id}();
-        }}
+    document.body.addEventListener('htmx:afterSettle', function(evt) {{
+        requestAnimationFrame(() => {{
+            if (document.getElementById('{chart_id}')) {{
+                initChart_{pred.id}();
+            }}
+        }});
     }});
 
-    // Handle HTMX events
-    document.addEventListener('htmx:beforeSwap', function(evt) {{
+    // Clean up before HTMX swaps
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {{
         if (evt.detail.target && evt.detail.target.contains(document.getElementById('{chart_id}'))) {{
             cleanupChart_{pred.id}();
         }}
