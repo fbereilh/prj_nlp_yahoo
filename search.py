@@ -87,10 +87,27 @@ semantic_search = SemanticSearch()
 
 def initialize_search():
     """Initialize the search index with all predictions"""
-    predictions = get_all_predictions()
-    semantic_search.build_index(predictions)
-    return True
+    try:
+        predictions = get_all_predictions()
+        if not predictions:
+            logger.warning("No predictions found in database - search index will be empty")
+            return True  # Return success but empty
+            
+        semantic_search.build_index(predictions)
+        logger.info(f"Built search index with {len(predictions)} predictions")
+        return True
+    except Exception as e:
+        logger.error(f"Error initializing search: {str(e)}")
+        return False
+
+def reinitialize_search():
+    """Reinitialize the search index - call this after adding new predictions"""
+    return initialize_search()
 
 def search_predictions(query: str) -> List[Tuple[Prediction, float]]:
     """Search for similar predictions"""
+    # Try to reinitialize if index is empty
+    if not semantic_search.index or not semantic_search.predictions:
+        logger.info("Search index empty, attempting to reinitialize...")
+        initialize_search()
     return semantic_search.search(query) 

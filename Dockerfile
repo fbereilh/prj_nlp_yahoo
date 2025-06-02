@@ -26,7 +26,8 @@ RUN . ~/.bashrc && \
     pip install --no-cache-dir -r requirements.txt
 
 # Create directory for models and data
-RUN mkdir -p models data
+RUN mkdir -p models data && \
+    chmod 777 data  # Ensure data directory is writable
 
 # Copy model files and setup script
 COPY models/ ./models/

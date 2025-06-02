@@ -383,13 +383,7 @@ async def startup_event():
     try:
         logger.info("Starting application initialization...")
         
-        # Initialize search first since it's lighter
-        logger.info("Initializing search functionality...")
-        if not initialize_search():
-            raise RuntimeError("Failed to initialize search")
-        logger.info("Search initialization completed")
-        
-        # Load model with optimized settings
+        # Load model with optimized settings first
         logger.info("Starting model initialization...")
         import torch
         if torch.cuda.is_available():
@@ -411,6 +405,17 @@ async def startup_event():
             
         model_loaded = True
         logger.info("Model initialization completed successfully")
+        
+        # Now initialize search after model is loaded
+        logger.info("Initializing search functionality...")
+        try:
+            if not initialize_search():
+                logger.warning("Search initialization returned False - this might mean no predictions in database")
+            logger.info("Search initialization completed")
+        except Exception as e:
+            logger.error(f"Search initialization failed: {str(e)}")
+            # Don't fail startup if search fails - it will reinitialize when data is available
+            
         logger.info("Application startup completed successfully")
     except Exception as e:
         logger.error(f"Error during startup: {str(e)}", exc_info=True)
