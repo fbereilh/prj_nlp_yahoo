@@ -4,6 +4,9 @@ FROM continuumio/miniconda3:latest
 # Set working directory
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Create conda environment
 RUN conda create -n app_env python=3.12 -y
 SHELL ["/bin/bash", "-c"]
@@ -16,23 +19,30 @@ RUN conda init bash && \
     pip install --no-cache-dir sentence-transformers==4.1.0
 
 # Copy requirements first to leverage Docker cache
-COPY requirements_working.txt ./requirements.txt
+COPY requirements.txt ./requirements.txt
 
 # Install remaining Python dependencies
 RUN . ~/.bashrc && \
     pip install --no-cache-dir -r requirements.txt
 
+# Create directory for models and data
+RUN mkdir -p models data
+
+# Copy model files and setup script
+COPY models/ ./models/
+COPY download_models.py .
+
+# Run model setup script
+RUN . ~/.bashrc && python download_models.py
+
 # Copy the rest of the application
 COPY . .
 
-# Create directory for models if it doesn't exist
-RUN mkdir -p models
-
-# Create directory for data if it doesn't exist
-RUN mkdir -p data
-
 # Expose the port the app runs on
 EXPOSE 5001
+
+# Set environment variable to use CPU by default
+ENV USE_CUDA=0
 
 # Set the default command to run the application
 CMD ["conda", "run", "-n", "app_env", "python", "app.py"] 

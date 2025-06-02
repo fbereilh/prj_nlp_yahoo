@@ -6,13 +6,15 @@ from typing import Optional
 from torch.serialization import add_safe_globals
 from fastcore.foundation import L
 import logging
+import os
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Add fastcore.foundation.L to safe globals
-add_safe_globals([L])
+# Add required safe globals
+add_safe_globals([L, np.core.multiarray.scalar])
 
 # Model configuration
 MODEL_CONFIG = {
@@ -99,30 +101,51 @@ def load_model():
         tokenizer = load_tokenizer()
         model = create_model(vocab_size=tokenizer.vocab_size)
         
-        # Handle loading on CPU if CUDA is not available
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        # Check environment variable for CUDA usage
+        use_cuda = int(os.getenv('USE_CUDA', '0')) and torch.cuda.is_available()
+        device = 'cuda' if use_cuda else 'cpu'
         logger.info(f"Using device: {device}")
+        
+        # Load model with memory efficient settings
         logger.info(f"Loading model weights from {MODEL_PATH}")
+        try:
+            # First try with weights_only=True
+            checkpoint = torch.load(
+                str(MODEL_PATH),
+                map_location=device,
+                weights_only=True
+            )
+        except Exception as e:
+            logger.warning(f"Failed to load with weights_only=True: {str(e)}")
+            logger.info("Attempting to load with weights_only=False")
+            # If that fails, try with weights_only=False
+            checkpoint = torch.load(
+                str(MODEL_PATH),
+                map_location=device,
+                weights_only=False
+            )
         
-        checkpoint = torch.load(str(MODEL_PATH), 
-                              map_location=device,
-                              weights_only=False)
-        
-        # Handle checkpoint that contains both model and optimizer states
+        # Handle checkpoint loading
         if isinstance(checkpoint, dict) and 'model' in checkpoint:
             logger.info("Loading from checkpoint dictionary")
             model.load_state_dict(checkpoint['model'])
         else:
             logger.info("Loading direct state dict")
             model.load_state_dict(checkpoint)
-            
-        model.eval()
-        if torch.cuda.is_available():
+        
+        model.eval()  # Set to evaluation mode
+        if use_cuda:
             model = model.cuda()
+            # Enable CUDA optimizations
+            torch.backends.cudnn.benchmark = True
+        else:
+            # Enable CPU optimizations
+            torch.set_num_threads(os.cpu_count())
+            
         logger.info("Model loaded successfully")
         return True
     except Exception as e:
-        logger.error(f"Error loading model: {str(e)}", exc_info=True)
+        logger.error(f"Error loading model: {str(e)}")
         return False
 
 def predict_text(text: str) -> dict:

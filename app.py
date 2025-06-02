@@ -358,7 +358,20 @@ def post(query: str):
 @rt("/styles.css")
 def get():
     """Serve the CSS file"""
-    return FileResponse("styles.css", media_type="text/css")
+    return Response(
+        content=open("static/styles.css").read(),
+        media_type="text/css"
+    )
+
+@rt("/health")
+def get():
+    """Health check endpoint"""
+    if not model_loaded:
+        return Response(
+            content={"status": "error", "message": "Model not loaded"},
+            status_code=503
+        )
+    return {"status": "healthy", "message": "Service is running"}
 
 # Startup event to load model
 @app.on_event("startup")
@@ -366,26 +379,41 @@ async def startup_event():
     """Initialize the model and search index on startup"""
     global model_loaded
     try:
+        logger.info("Starting application initialization...")
+        
         # Initialize search first since it's lighter
-        initialize_search()
+        logger.info("Initializing search functionality...")
+        if not initialize_search():
+            raise RuntimeError("Failed to initialize search")
+        logger.info("Search initialization completed")
         
         # Load model with optimized settings
+        logger.info("Starting model initialization...")
         import torch
         if torch.cuda.is_available():
             # Use GPU if available
             device = "cuda"
+            logger.info("CUDA is available, using GPU")
             torch.cuda.empty_cache()
         else:
             # Use CPU with optimized settings
             device = "cpu"
-            torch.set_num_threads(2)  # Limit threads to reduce memory usage
+            logger.info("CUDA not available, using CPU")
+            import os
+            n_threads = min(os.cpu_count() or 1, 4)  # Use at most 4 threads
+            torch.set_num_threads(n_threads)
+            logger.info(f"Set CPU threads to {n_threads}")
         
-        load_model(device=device)
+        if not load_model():
+            raise RuntimeError("Failed to load model")
+            
         model_loaded = True
-        logger.info("Model and search initialized successfully")
+        logger.info("Model initialization completed successfully")
+        logger.info("Application startup completed successfully")
     except Exception as e:
-        logger.error(f"Error during startup: {e}")
+        logger.error(f"Error during startup: {str(e)}", exc_info=True)
         model_loaded = False
+        raise  # Re-raise the exception to ensure the app doesn't start with failed initialization
 
 if __name__ == "__main__":
     serve() 
