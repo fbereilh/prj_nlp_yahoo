@@ -6,6 +6,11 @@ This project implements a text classification system using the Yahoo! Answers da
 ## Live Demo
 The project is deployed and accessible at: [https://yahoo.fbereilh.com](https://yahoo.fbereilh.com)
 
+## Project Resources
+- The complete project development process is available in the Jupyter notebook file `prj_nlp_yahoo.ipynb`
+- You can also find this project on Kaggle: [https://www.kaggle.com/code/fbereilh/prj-nlp-yahoo](https://www.kaggle.com/code/fbereilh/prj-nlp-yahoo)
+
+
 ## Project Highlights
 
 ### Objectives
@@ -42,4 +47,23 @@ The developed solution has potential applications in various domains:
 - News and document classification
 - Semantic tagging for legal, financial, or healthcare documents
 - Information retrieval optimization
+
+## Project Structure
+```
+├── app.py                 # FastHTML web application with routes and UI components
+├── model.py              # Model definition and inference logic
+├── database.py           # Database operations and schema
+├── search.py             # Text search functionality
+├── download_models.py    # Script to download and setup model files
+├── add_examples.py       # Utility to add example predictions
+├── requirements.txt      # Python dependencies
+├── Dockerfile           # Container configuration
+├── docker-compose.yml   # Container orchestration
+├── static/              # Static assets (CSS, etc.)
+│   └── styles.css       # Application styles
+├── models/              # Directory for model files
+├── data/               # Data storage directory
+└── prj-nlp-yahoo.ipynb # Jupyter notebook with model development process
+```
+
 
