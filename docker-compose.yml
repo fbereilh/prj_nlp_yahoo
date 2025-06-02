@@ -2,19 +2,18 @@ version: '3.8'
 
 services:
   web:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    image: yahoo-nlp
+    build: .
+    image: yahoo-nlp:${TAG:-latest}
     container_name: yahoo-nlp-service
     ports:
-      - "5001:5001"
+      - "${PORT:-5001}:5001"
     environment:
       - PYTHONUNBUFFERED=1
       - USE_CUDA=0
+      - PORT=5001
     volumes:
-      - ./models:/app/models:ro
-      - ./data:/app/data
+      - models:/app/models
+      - data:/app/data
     deploy:
       resources:
         limits:
@@ -35,5 +34,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  models_data:
-  app_data: 
+  models:
+  data: 
